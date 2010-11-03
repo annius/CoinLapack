@@ -8,11 +8,8 @@ AUTOMAKE_OPTIONS = foreign
 
 EXTRA_DIST = get.lapack INSTALL.LAPACK
 
-if SKIPMAKE
-  noinst_LTLIBRARIES =
-else
-  noinst_LTLIBRARIES = libcoinlapack.la
-endif
+thirdpartylibdir = $(libdir)/coin/ThirdParty
+thirdpartylib_LTLIBRARIES = libcoinlapack.la
 
 LAPACK_FILES = \
 	dbdsqr.f \
@@ -86,7 +83,7 @@ LAPACK_FILES = \
 	ilaenv.f \
 	iparmq.f
 
-nodist_libcoinlapack_la_SOURCES = $(LAPACK_FILES)
+libcoinlapack_la_SOURCES = $(LAPACK_FILES)
 
 libcoinlapack_la_LDFLAGS = $(LT_LDFLAGS)
 
@@ -99,11 +96,31 @@ dlamch.obj: dlamch.f
 dlamch.lo: dlamch.f
 	$(LIBTOOL) --tag=F77 --mode=compile $(F77) $(AM_FFLAGS) $(DLAMCH_FFLAGS) -c -o $@ $<
 
+pkgconfiglibdir = $(libdir)/pkgconfig
+pkgconfiglib_DATA = coinlapack.pc
+
+if COIN_HAS_PKGCONFIG
+addlibsdir = $(DESTDIR)$(datadir)/coin/doc/ThirdParty/Lapack
+	
+install-data-hook:
+	@$(mkdir_p) "$(addlibsdir)"
+	PKG_CONFIG_PATH=@COIN_PKG_CONFIG_PATH@ \
+	$(PKG_CONFIG) --libs coinlapack > $(addlibsdir)/lapack_addlibs.txt
+	
+uninstall-hook:
+	rm -f $(addlibsdir)/lapack_addlibs.txt
+endif
+
+test: $(libampl)
+	@echo "No test available for Lapack."
+
 ########################################################################
 #                         Maintainer Stuff                             #
 ########################################################################
 
+CLEANFILES =
+
 # Files that are generated and should be cleaned with make distclean
 DISTCLEANFILES = $(LAPACK_FILES) $(MAKEOKFILE)
 
-include ../../BuildTools/Makemain.inc
+include BuildTools/Makemain.inc

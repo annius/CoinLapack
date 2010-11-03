@@ -12,8 +12,7 @@
 
 AC_PREREQ(2.59)
 
-AC_INIT([ThirdPartyLapack],[0.0],
-        [http://projects.coin-or.org/BuildTools/newticket])
+AC_INIT([ThirdPartyLapack],[1.2],[http://projects.coin-or.org/BuildTools/newticket])
 
 AC_COPYRIGHT([
 Copyright 2006 International Business Machines and others.
@@ -31,7 +30,7 @@ AC_CONFIG_SRCDIR(LAPACK/SRC/dlarf.f)
 # /usr/local.
 AC_PREFIX_DEFAULT([`pwd`])
 
-AC_COIN_PROJECTDIR_INIT
+AC_COIN_PROJECTDIR_INIT(Lapack)
 
 #############################################################################
 #                         Standard build tool stuff                         #
@@ -49,6 +48,16 @@ AC_COIN_DEBUG_COMPILE(Lapack)
 
 # Get the name of the Fortran compiler and appropriate compiler options
 AC_COIN_PROG_F77
+
+# Get the linker flags (FLIBS) that are required for linking against this blas library
+AC_COIN_F77_WRAPPERS
+
+# Check if pkg-config is available (to setup addlibs file)
+AC_COIN_HAS_PKGCONFIG
+
+# Add FLIBS to LAPACK_PCLIBS, so that they get into the .pc files
+LAPACK_PCLIBS="$FLIBS"
+AC_SUBST(LAPACK_PCLIBS)
 
 # Take care that optimization is disbled for DLAMCH.F 
 AC_ARG_VAR(DLAMCH_FFLAGS,[Fortran compiler options for DLAMCH.F])
@@ -85,38 +94,19 @@ AC_SUBST(DLAMCH_FFLAGS)
 # Initialize autotools
 AC_COIN_INIT_AUTO_TOOLS
 
-# Check if Lapack is already available on the system or provided by user
-#save_LIBS="$LIBS"
-AC_COIN_HAS_BLAS
-#LIBS="$save_LIBS" # we need to make sure that blas libraries are not in LIBS
-
-AC_COIN_HAS_LAPACK
-MAKEOKFILE=.MakeOk
-if test $coin_has_lapack = yes && test "$use_lapack" != BUILD; then
-  rm -f $MAKEOKFILE
-  AC_MSG_NOTICE([The Lapack sources don't need to be compiled])
-  MAKEOKFILE=
-else
-  touch $MAKEOKFILE
-fi
-AC_SUBST(MAKEOKFILE)
-AM_CONDITIONAL(SKIPMAKE, test -z "$MAKEOKFILE")
-
 #############################################################################
 #               Create links to the required source files                   #
 #############################################################################
 
-if test x"$MAKEOKFILE" != x; then
-  lapack_source_files='dbdsqr.f dgebd2.f dgebrd.f dgelq2.f dgelqf.f dgeqr2.f dgeqrf.f dgesvd.f dgesv.f dgetf2.f dgetrf.f dgetrs.f disnan.f dlabrd.f dlacpy.f dlaisnan.f dlae2.f dlaev2.f dlange.f dlanst.f dlansy.f dlapy2.f dlarf.f dlarfb.f dlarfg.f dlarfp.f dlarft.f dlartg.f dlas2.f dlascl.f dlaset.f dlasq1.f dlasq2.f dlasq3.f dlasq4.f dlasq5.f dlasq6.f dlasr.f dlasrt.f dlassq.f dlaswp.f dlatrd.f dlasv2.f dorg2l.f dorg2r.f dorgbr.f dorglq.f dorgl2.f dorgql.f dorgqr.f dorgtr.f dorm2r.f dormbr.f dorml2.f dormlq.f dormqr.f dpotf2.f dpotrf.f dpotrs.f dsteqr.f dsterf.f dsyev.f dsytd2.f dsytrd.f ieeeck.f iladlc.f iladlr.f ilaenv.f iparmq.f'
-  for file in $lapack_source_files; do
-    AC_CONFIG_LINKS($file:LAPACK/SRC/$file)
-  done
-  lapack_source_files_in_install='dlamch.f'
-  for file_in_install in $lapack_source_files_in_install; do
-    AC_CONFIG_LINKS($file_in_install:LAPACK/INSTALL/$file_in_install)
-  done
-fi
+lapack_source_files='dbdsqr.f dgebd2.f dgebrd.f dgelq2.f dgelqf.f dgeqr2.f dgeqrf.f dgesvd.f dgesv.f dgetf2.f dgetrf.f dgetrs.f disnan.f dlabrd.f dlacpy.f dlaisnan.f dlae2.f dlaev2.f dlange.f dlanst.f dlansy.f dlapy2.f dlarf.f dlarfb.f dlarfg.f dlarfp.f dlarft.f dlartg.f dlas2.f dlascl.f dlaset.f dlasq1.f dlasq2.f dlasq3.f dlasq4.f dlasq5.f dlasq6.f dlasr.f dlasrt.f dlassq.f dlaswp.f dlatrd.f dlasv2.f dorg2l.f dorg2r.f dorgbr.f dorglq.f dorgl2.f dorgql.f dorgqr.f dorgtr.f dorm2r.f dormbr.f dorml2.f dormlq.f dormqr.f dpotf2.f dpotrf.f dpotrs.f dsteqr.f dsterf.f dsyev.f dsytd2.f dsytrd.f ieeeck.f iladlc.f iladlr.f ilaenv.f iparmq.f'
+for file in $lapack_source_files; do
+  AC_CONFIG_LINKS($file:LAPACK/SRC/$file)
+done
+lapack_source_files_in_install='dlamch.f'
+for file_in_install in $lapack_source_files_in_install; do
+  AC_CONFIG_LINKS($file_in_install:LAPACK/INSTALL/$file_in_install)
+done
 
-AC_CONFIG_FILES([Makefile])
+AC_CONFIG_FILES([Makefile coinlapack.pc coinlapack-uninstalled.pc])
 
 AC_COIN_FINALIZE
